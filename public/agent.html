@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCart Logistics - Agent Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🌱 EcoCart Logistics</h1>
+            <p>Agent Dashboard</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <a href="/">Customer Portal</a>
+            <a href="/agent" class="active">Agent Dashboard</a>
+            <a href="/manager">Manager Dashboard</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="agent-header">
+            <h2>Delivery Agent Dashboard</h2>
+            <div class="agent-selector">
+                <label for="agentSelect">Select Agent:</label>
+                <select id="agentSelect" onchange="loadAgentData()">
+                    <option value="">Choose an agent...</option>
+                </select>
+            </div>
+        </section>
+
+        <div id="agentDashboard" style="display: none;">
+            <section class="agent-info">
+                <div class="agent-card">
+                    <h3 id="agentName">Agent Profile</h3>
+                    <div class="agent-stats">
+                        <div class="stat-item">
+                            <label>Current Load:</label>
+                            <span id="currentLoad">0</span>/<span id="maxCapacity">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <label>Region:</label>
+                            <span id="agentRegion">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <label>Performance Rating:</label>
+                            <span id="performanceRating">-</span>/5.0
+                        </div>
+                        <div class="stat-item">
+                            <label>Total Deliveries:</label>
+                            <span id="totalDeliveries">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="orders-management">
+                <h3>My Assigned Orders</h3>
+                <div id="assignedOrders" class="orders-grid">
+                    <!-- Orders will be loaded here -->
+                </div>
+            </section>
+
+            <section class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="showUpdateModal()">
+                        📝 Update Order Status
+                    </button>
+                    <button class="action-btn" onclick="showRouteOptimization()">
+                        🗺️ Optimize Route
+                    </button>
+                    <button class="action-btn" onclick="showEmergencyContact()">
+                        🚨 Emergency Contact
+                    </button>
+                    <button class="action-btn" onclick="refreshOrders()">
+                        🔄 Refresh Orders
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Update Status Modal -->
+    <div id="updateModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Order Status</h3>
+                <span class="close" onclick="closeUpdateModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="updateForm">
+                    <div class="form-group">
+                        <label for="updateOrderId">Order ID:</label>
+                        <select id="updateOrderId" required>
+                            <option value="">Select Order...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newStatus">New Status:</label>
+                        <select id="newStatus" required>
+                            <option value="">Select Status...</option>
+                            <option value="picked_up">Picked Up</option>
+                            <option value="in_transit">In Transit</option>
+                            <option value="out_for_delivery">Out for Delivery</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="failed_delivery">Failed Delivery</option>
+                            <option value="returned">Returned</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newLocation">Current Location:</label>
+                        <input type="text" id="newLocation" placeholder="Enter current location" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateNotes">Notes (Optional):</label>
+                        <textarea id="updateNotes" placeholder="Additional notes or comments"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="closeUpdateModal()">Cancel</button>
+                        <button type="submit">Update Status</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Route Optimization Modal -->
+    <div id="routeModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Route Optimization</h3>
+                <span class="close" onclick="closeRouteModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="route-info">
+                    <h4>Optimized Delivery Route</h4>
+                    <div id="routeDetails">
+                        <p>📍 Starting from your current location...</p>
+                        <div class="route-list" id="routeList">
+                            <!-- Route will be populated here -->
+                        </div>
+                        <div class="route-summary">
+                            <p><strong>Total Distance:</strong> <span id="totalDistance">-</span></p>
+                            <p><strong>Estimated Time:</strong> <span id="estimatedTime">-</span></p>
+                            <p><strong>Fuel Efficiency:</strong> <span id="fuelEfficiency">-</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeRouteModal()">Close</button>
+                    <button type="button" onclick="exportRoute()">Export Route</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contact Modal -->
+    <div id="emergencyModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Emergency Contacts</h3>
+                <span class="close" onclick="closeEmergencyModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="emergency-contacts">
+                    <div class="contact-item">
+                        <h4>🚨 Emergency Services</h4>
+                        <p><strong>Phone:</strong> 911</p>
+                    </div>
+                    <div class="contact-item">
+                        <h4>📞 Operations Center</h4>
+                        <p><strong>Phone:</strong> +1-555-OPERATIONS</p>
+                        <p><strong>Email:</strong> ops@ecocart.com</p>
+                    </div>
+                    <div class="contact-item">
+                        <h4>🛠️ Technical Support</h4>
+                        <p><strong>Phone:</strong> +1-555-TECH-HELP</p>
+                        <p><strong>Email:</strong> support@ecocart.com</p>
+                    </div>
+                    <div class="contact-item">
+                        <h4>👥 Customer Service</h4>
+                        <p><strong>Phone:</strong> +1-555-CUSTOMER</p>
+                        <p><strong>Email:</strong> customerservice@ecocart.com</p>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeEmergencyModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 EcoCart Logistics. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        let currentAgent = null;
+        let agentOrders = [];
+
+        // Load agents on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAgents();
+        });
+
+        function loadAgents() {
+            fetch('/api/agents')
+                .then(response => response.json())
+                .then(agents => {
+                    const select = document.getElementById('agentSelect');
+                    select.innerHTML = '<option value="">Choose an agent...</option>';
+                    
+                    agents.forEach(agent => {
+                        const option = document.createElement('option');
+                        option.value = agent.id;
+                        option.textContent = `${agent.name} (${agent.region})`;
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading agents:', error));
+        }
+
+        function loadAgentData() {
+            const agentId = document.getElementById('agentSelect').value;
+            if (!agentId) {
+                document.getElementById('agentDashboard').style.display = 'none';
+                return;
+            }
+
+            // Load agent info
+            fetch('/api/agents')
+                .then(response => response.json())
+                .then(agents => {
+                    currentAgent = agents.find(a => a.id === agentId);
+                    if (currentAgent) {
+                        displayAgentInfo(currentAgent);
+                    }
+                });
+
+            // Load agent orders
+            fetch(`/api/agents/${agentId}/orders`)
+                .then(response => response.json())
+                .then(orders => {
+                    agentOrders = orders;
+                    displayAgentOrders(orders);
+                    populateUpdateModal(orders);
+                    document.getElementById('agentDashboard').style.display = 'block';
+                })
+                .catch(error => console.error('Error loading agent data:', error));
+        }
+
+        function displayAgentInfo(agent) {
+            document.getElementById('agentName').textContent = agent.name;
+            document.getElementById('currentLoad').textContent = agent.currentLoad;
+            document.getElementById('maxCapacity').textContent = agent.maxCapacity;
+            document.getElementById('agentRegion').textContent = agent.region;
+            document.getElementById('performanceRating').textContent = agent.performanceRating;
+            document.getElementById('totalDeliveries').textContent = agent.totalDeliveries;
+        }
+
+        function displayAgentOrders(orders) {
+            const container = document.getElementById('assignedOrders');
+            container.innerHTML = '';
+
+            if (orders.length === 0) {
+                container.innerHTML = '<p class="no-orders">No orders assigned currently.</p>';
+                return;
+            }
+
+            orders.forEach(order => {
+                const orderCard = document.createElement('div');
+                orderCard.className = 'order-card';
+                orderCard.innerHTML = `
+                    <div class="order-header">
+                        <h4>${order.id}</h4>
+                        <span class="status-badge status-${order.status}">${formatStatus(order.status)}</span>
+                    </div>
+                    <div class="order-details">
+                        <p><strong>Customer:</strong> ${order.customerName}</p>
+                        <p><strong>Items:</strong> ${order.items.join(', ')}</p>
+                        <p><strong>Value:</strong> $${order.totalValue.toFixed(2)}</p>
+                        <p><strong>Location:</strong> ${order.currentLocation}</p>
+                        <p><strong>Delivery:</strong> ${formatDate(order.estimatedDelivery)}</p>
+                    </div>
+                    <div class="order-actions">
+                        <button onclick="quickUpdateStatus('${order.id}')" class="btn-small">Quick Update</button>
+                        <button onclick="viewOrderDetails('${order.id}')" class="btn-small btn-secondary">View Details</button>
+                    </div>
+                `;
+                container.appendChild(orderCard);
+            });
+        }
+
+        function populateUpdateModal(orders) {
+            const select = document.getElementById('updateOrderId');
+            select.innerHTML = '<option value="">Select Order...</option>';
+            
+            orders.forEach(order => {
+                const option = document.createElement('option');
+                option.value = order.id;
+                option.textContent = `${order.id} - ${order.customerName}`;
+                select.appendChild(option);
+            });
+        }
+
+        function showUpdateModal(orderId = null) {
+            if (orderId) {
+                document.getElementById('updateOrderId').value = orderId;
+            }
+            document.getElementById('updateModal').style.display = 'block';
+        }
+
+        function closeUpdateModal() {
+            document.getElementById('updateModal').style.display = 'none';
+            document.getElementById('updateForm').reset();
+        }
+
+        function showRouteOptimization() {
+            // Simulate route optimization
+            const routeList = document.getElementById('routeList');
+            routeList.innerHTML = '';
+            
+            agentOrders.filter(o => ['picked_up', 'in_transit', 'out_for_delivery'].includes(o.status))
+                .forEach((order, index) => {
+                    const routeItem = document.createElement('div');
+                    routeItem.className = 'route-item';
+                    routeItem.innerHTML = `
+                        <div class="route-number">${index + 1}</div>
+                        <div class="route-details">
+                            <strong>${order.customerName}</strong><br>
+                            ${order.id} - ${order.items.join(', ')}<br>
+                            <small>Est. ${index * 15 + 15} minutes</small>
+                        </div>
+                    `;
+                    routeList.appendChild(routeItem);
+                });
+
+            // Update summary
+            const totalOrders = agentOrders.filter(o => ['picked_up', 'in_transit', 'out_for_delivery'].includes(o.status)).length;
+            document.getElementById('totalDistance').textContent = `${(totalOrders * 3.2).toFixed(1)} miles`;
+            document.getElementById('estimatedTime').textContent = `${totalOrders * 15 + 30} minutes`;
+            document.getElementById('fuelEfficiency').textContent = '25% improved';
+
+            document.getElementById('routeModal').style.display = 'block';
+        }
+
+        function closeRouteModal() {
+            document.getElementById('routeModal').style.display = 'none';
+        }
+
+        function exportRoute() {
+            alert('Route exported to GPS device!');
+            closeRouteModal();
+        }
+
+        function showEmergencyContact() {
+            document.getElementById('emergencyModal').style.display = 'block';
+        }
+
+        function closeEmergencyModal() {
+            document.getElementById('emergencyModal').style.display = 'none';
+        }
+
+        function refreshOrders() {
+            if (currentAgent) {
+                loadAgentData();
+            }
+        }
+
+        function quickUpdateStatus(orderId) {
+            showUpdateModal(orderId);
+        }
+
+        function viewOrderDetails(orderId) {
+            window.open(`/?order=${orderId}`, '_blank');
+        }
+
+        // Handle update form submission
+        document.getElementById('updateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const orderId = document.getElementById('updateOrderId').value;
+            const status = document.getElementById('newStatus').value;
+            const location = document.getElementById('newLocation').value;
+            const notes = document.getElementById('updateNotes').value;
+
+            fetch(`/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: status,
+                    location: location,
+                    notes: notes
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('Order status updated successfully!');
+                    closeUpdateModal();
+                    loadAgentData(); // Refresh the data
+                } else {
+                    alert('Error updating order status');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating order status');
+            });
+        });
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = ['updateModal', 'routeModal', 'emergencyModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

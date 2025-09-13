@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCart Logistics - Track Your Order</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🌱 EcoCart Logistics</h1>
+            <p>Streamlining E-commerce Deliveries</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <a href="/" class="active">Customer Portal</a>
+            <a href="/agent">Agent Dashboard</a>
+            <a href="/manager">Manager Dashboard</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Track Your Order</h2>
+            <p>Get real-time updates on your delivery status</p>
+        </section>
+
+        <section class="tracking-section">
+            <div class="search-box">
+                <input type="text" id="orderIdInput" placeholder="Enter your Order ID (e.g., ORD001)" />
+                <button onclick="trackOrder()">Track Order</button>
+            </div>
+
+            <div id="orderResults" class="order-results" style="display: none;">
+                <div class="order-card">
+                    <div class="order-header">
+                        <h3 id="orderTitle">Order Details</h3>
+                        <span id="orderStatus" class="status-badge"></span>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Customer:</label>
+                                <span id="customerName"></span>
+                            </div>
+                            <div class="info-item">
+                                <label>Items:</label>
+                                <span id="orderItems"></span>
+                            </div>
+                            <div class="info-item">
+                                <label>Total Value:</label>
+                                <span id="orderValue"></span>
+                            </div>
+                            <div class="info-item">
+                                <label>Current Location:</label>
+                                <span id="currentLocation"></span>
+                            </div>
+                            <div class="info-item">
+                                <label>Estimated Delivery:</label>
+                                <span id="estimatedDelivery"></span>
+                            </div>
+                            <div class="info-item" id="actualDeliveryRow" style="display: none;">
+                                <label>Actual Delivery:</label>
+                                <span id="actualDelivery"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tracking-timeline">
+                        <h4>Tracking History</h4>
+                        <div id="trackingHistory" class="timeline"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error-message" style="display: none;">
+                <p>Order not found. Please check your Order ID and try again.</p>
+            </div>
+        </section>
+
+        <section class="features">
+            <h3>Why Choose EcoCart Logistics?</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📍</div>
+                    <h4>Real-time Tracking</h4>
+                    <p>Get live updates on your order's location and status</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h4>Fast Delivery</h4>
+                    <p>Optimized routes ensure quick and efficient delivery</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌱</div>
+                    <h4>Eco-Friendly</h4>
+                    <p>Sustainable delivery practices for a greener future</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📞</div>
+                    <h4>24/7 Support</h4>
+                    <p>Round-the-clock customer support for any queries</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 EcoCart Logistics. All rights reserved.</p>
+            <p>Streamlining E-commerce Deliveries with Salesforce Integration</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Customer portal specific functionality
+        function trackOrder() {
+            const orderId = document.getElementById('orderIdInput').value.trim();
+            if (!orderId) {
+                alert('Please enter an Order ID');
+                return;
+            }
+
+            fetch(`/api/orders/${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Order not found');
+                    }
+                    return response.json();
+                })
+                .then(order => {
+                    displayOrderDetails(order);
+                    document.getElementById('orderResults').style.display = 'block';
+                    document.getElementById('errorMessage').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('orderResults').style.display = 'none';
+                    document.getElementById('errorMessage').style.display = 'block';
+                });
+        }
+
+        function displayOrderDetails(order) {
+            document.getElementById('orderTitle').textContent = `Order ${order.id}`;
+            document.getElementById('orderStatus').textContent = formatStatus(order.status);
+            document.getElementById('orderStatus').className = `status-badge status-${order.status}`;
+            
+            document.getElementById('customerName').textContent = order.customerName;
+            document.getElementById('orderItems').textContent = order.items.join(', ');
+            document.getElementById('orderValue').textContent = `$${order.totalValue.toFixed(2)}`;
+            document.getElementById('currentLocation').textContent = order.currentLocation;
+            document.getElementById('estimatedDelivery').textContent = formatDate(order.estimatedDelivery);
+            
+            if (order.actualDelivery) {
+                document.getElementById('actualDelivery').textContent = formatDate(order.actualDelivery);
+                document.getElementById('actualDeliveryRow').style.display = 'block';
+            } else {
+                document.getElementById('actualDeliveryRow').style.display = 'none';
+            }
+
+            displayTrackingHistory(order.trackingHistory);
+        }
+
+        function displayTrackingHistory(history) {
+            const timeline = document.getElementById('trackingHistory');
+            timeline.innerHTML = '';
+
+            history.forEach((event, index) => {
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'timeline-item';
+                eventDiv.innerHTML = `
+                    <div class="timeline-marker ${index === history.length - 1 ? 'current' : ''}"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-time">${formatDate(event.timestamp)}</div>
+                        <div class="timeline-status">${formatStatus(event.status)}</div>
+                        <div class="timeline-location">${event.location}</div>
+                        ${event.notes ? `<div class="timeline-notes">${event.notes}</div>` : ''}
+                    </div>
+                `;
+                timeline.appendChild(eventDiv);
+            });
+        }
+
+        // Allow Enter key to track order
+        document.getElementById('orderIdInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                trackOrder();
+            }
+        });
+    </script>
+</body>
+</html>

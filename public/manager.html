@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCart Logistics - Manager Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🌱 EcoCart Logistics</h1>
+            <p>Manager Dashboard</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <a href="/">Customer Portal</a>
+            <a href="/agent">Agent Dashboard</a>
+            <a href="/manager" class="active">Manager Dashboard</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="dashboard-header">
+            <h2>Operations Management Dashboard</h2>
+            <div class="dashboard-controls">
+                <button onclick="refreshDashboard()" class="refresh-btn">🔄 Refresh Data</button>
+                <button onclick="showAutomationPanel()" class="automation-btn">🤖 Automation</button>
+            </div>
+        </section>
+
+        <section class="kpi-section">
+            <h3>Key Performance Indicators</h3>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="totalOrders">0</div>
+                    <div class="kpi-label">Total Orders</div>
+                    <div class="kpi-trend positive">↗ +12%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="activeOrders">0</div>
+                    <div class="kpi-label">Active Orders</div>
+                    <div class="kpi-trend negative">↘ -3%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="deliveryRate">0%</div>
+                    <div class="kpi-label">Delivery Rate</div>
+                    <div class="kpi-trend positive">↗ +5%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="avgDeliveryTime">0</div>
+                    <div class="kpi-label">Avg Delivery Time</div>
+                    <div class="kpi-trend positive">↗ Improved</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="customerSatisfaction">0</div>
+                    <div class="kpi-label">Customer Satisfaction</div>
+                    <div class="kpi-trend positive">↗ +0.2</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="activeAgents">0</div>
+                    <div class="kpi-label">Active Agents</div>
+                    <div class="kpi-trend neutral">→ Stable</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="regional-performance">
+            <h3>Regional Performance</h3>
+            <div class="regions-grid" id="regionsGrid">
+                <!-- Regional data will be loaded here -->
+            </div>
+        </section>
+
+        <section class="agent-management">
+            <h3>Agent Management</h3>
+            <div class="agents-table-container">
+                <table class="agents-table">
+                    <thead>
+                        <tr>
+                            <th>Agent Name</th>
+                            <th>Region</th>
+                            <th>Status</th>
+                            <th>Current Load</th>
+                            <th>Performance</th>
+                            <th>Total Deliveries</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agentsTableBody">
+                        <!-- Agent data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="analytics">
+            <h3>Analytics & Insights</h3>
+            <div class="analytics-grid">
+                <div class="chart-container">
+                    <h4>Daily Order Trends</h4>
+                    <div id="dailyChart" class="chart-placeholder">
+                        <canvas id="dailyOrdersChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="alerts-container">
+                    <h4>System Alerts</h4>
+                    <div id="systemAlerts" class="alerts-list">
+                        <!-- Alerts will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Automation Panel Modal -->
+    <div id="automationModal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>🤖 Automation & Assignment Panel</h3>
+                <span class="close" onclick="closeAutomationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="automation-sections">
+                    <div class="automation-section">
+                        <h4>Auto-Assignment Settings</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="autoAssignEnabled" checked>
+                                Enable Automatic Agent Assignment
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="loadBalancing" checked>
+                                Load Balancing Optimization
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="performanceWeighting" checked>
+                                Performance-Based Weighting
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="automation-section">
+                        <h4>Manual Assignment</h4>
+                        <form id="manualAssignForm">
+                            <div class="form-group">
+                                <label for="orderSelect">Order:</label>
+                                <select id="orderSelect" required>
+                                    <option value="">Select unassigned order...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="regionSelect">Region:</label>
+                                <select id="regionSelect" required onchange="updateAvailableAgents()">
+                                    <option value="">Select region...</option>
+                                    <option value="Northeast">Northeast</option>
+                                    <option value="Southwest">Southwest</option>
+                                    <option value="Midwest">Midwest</option>
+                                    <option value="Southeast">Southeast</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="agentSelect">Available Agents:</label>
+                                <select id="agentSelectManual">
+                                    <option value="">Select agent...</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit">Assign Order</button>
+                                <button type="button" onclick="autoAssignOrder()">Auto-Assign</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="automation-section">
+                        <h4>Conflict Resolution</h4>
+                        <div id="conflictsList" class="conflicts-list">
+                            <!-- Conflicts will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Details Modal -->
+    <div id="agentDetailsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="agentDetailsTitle">Agent Details</h3>
+                <span class="close" onclick="closeAgentDetailsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="agentDetailsContent">
+                    <!-- Agent details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 EcoCart Logistics. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        let dashboardData = {};
+        let allAgents = [];
+        let allOrders = [];
+
+        // Load dashboard data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+        });
+
+        function loadDashboardData() {
+            Promise.all([
+                fetch('/api/dashboard/summary').then(r => r.json()),
+                fetch('/api/performance').then(r => r.json()),
+                fetch('/api/agents').then(r => r.json()),
+                fetch('/api/orders').then(r => r.json())
+            ])
+            .then(([summary, performance, agents, orders]) => {
+                dashboardData = { summary, performance };
+                allAgents = agents;
+                allOrders = orders;
+                
+                updateKPIs(summary);
+                updateRegionalPerformance(performance.regions);
+                updateAgentsTable(agents);
+                updateAnalytics(performance.dailyMetrics);
+                generateSystemAlerts();
+            })
+            .catch(error => console.error('Error loading dashboard data:', error));
+        }
+
+        function updateKPIs(summary) {
+            document.getElementById('totalOrders').textContent = summary.totalOrders;
+            document.getElementById('activeOrders').textContent = summary.activeOrders;
+            document.getElementById('deliveryRate').textContent = 
+                Math.round((summary.deliveredOrders / summary.totalOrders) * 100) + '%';
+            document.getElementById('avgDeliveryTime').textContent = summary.avgDeliveryTime + ' days';
+            document.getElementById('customerSatisfaction').textContent = summary.customerSatisfaction + '/5.0';
+            document.getElementById('activeAgents').textContent = summary.activeAgents;
+        }
+
+        function updateRegionalPerformance(regions) {
+            const container = document.getElementById('regionsGrid');
+            container.innerHTML = '';
+
+            Object.entries(regions).forEach(([region, data]) => {
+                const regionCard = document.createElement('div');
+                regionCard.className = 'region-card';
+                regionCard.innerHTML = `
+                    <div class="region-header">
+                        <h4>${region}</h4>
+                        <span class="region-status ${data.customerSatisfaction >= 4.5 ? 'good' : data.customerSatisfaction >= 4.0 ? 'warning' : 'alert'}">
+                            ${data.customerSatisfaction >= 4.5 ? '✅' : data.customerSatisfaction >= 4.0 ? '⚠️' : '🚨'}
+                        </span>
+                    </div>
+                    <div class="region-stats">
+                        <div class="stat">
+                            <label>Total Orders:</label>
+                            <span>${data.totalOrders}</span>
+                        </div>
+                        <div class="stat">
+                            <label>Delivered:</label>
+                            <span>${data.delivered}</span>
+                        </div>
+                        <div class="stat">
+                            <label>Pending:</label>
+                            <span>${data.pending}</span>
+                        </div>
+                        <div class="stat">
+                            <label>Avg Time:</label>
+                            <span>${data.avgDeliveryTime} days</span>
+                        </div>
+                        <div class="stat">
+                            <label>Satisfaction:</label>
+                            <span>${data.customerSatisfaction}/5.0</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(regionCard);
+            });
+        }
+
+        function updateAgentsTable(agents) {
+            const tbody = document.getElementById('agentsTableBody');
+            tbody.innerHTML = '';
+
+            agents.forEach(agent => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${agent.name}</td>
+                    <td>${agent.region}</td>
+                    <td>
+                        <span class="status-badge status-${agent.status}">
+                            ${agent.status}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="load-indicator">
+                            <span>${agent.currentLoad}/${agent.maxCapacity}</span>
+                            <div class="load-bar">
+                                <div class="load-fill" style="width: ${(agent.currentLoad / agent.maxCapacity) * 100}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="rating">${agent.performanceRating}/5.0</span>
+                    </td>
+                    <td>${agent.totalDeliveries}</td>
+                    <td>
+                        <button onclick="viewAgentDetails('${agent.id}')" class="btn-small">View</button>
+                        <button onclick="contactAgent('${agent.id}')" class="btn-small btn-secondary">Contact</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateAnalytics(dailyMetrics) {
+            // Simple chart simulation
+            const canvas = document.getElementById('dailyOrdersChart');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw simple line chart
+            ctx.strokeStyle = '#4CAF50';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            const maxOrders = Math.max(...dailyMetrics.map(d => d.orders));
+            const width = canvas.width - 40;
+            const height = canvas.height - 40;
+            
+            dailyMetrics.forEach((data, index) => {
+                const x = 20 + (index / (dailyMetrics.length - 1)) * width;
+                const y = height - (data.orders / maxOrders) * (height - 20) + 20;
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            ctx.stroke();
+            
+            // Draw data points
+            ctx.fillStyle = '#4CAF50';
+            dailyMetrics.forEach((data, index) => {
+                const x = 20 + (index / (dailyMetrics.length - 1)) * width;
+                const y = height - (data.orders / maxOrders) * (height - 20) + 20;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+        }
+
+        function generateSystemAlerts() {
+            const alerts = [
+                { type: 'warning', message: 'Agent Mike Johnson approaching capacity limit (5/10)', time: '2 minutes ago' },
+                { type: 'info', message: 'New shipment batch ready for assignment (15 orders)', time: '5 minutes ago' },
+                { type: 'success', message: 'Regional performance targets met for Southwest', time: '1 hour ago' },
+                { type: 'alert', message: 'Delivery delay reported in Northeast region', time: '2 hours ago' }
+            ];
+
+            const container = document.getElementById('systemAlerts');
+            container.innerHTML = '';
+
+            alerts.forEach(alert => {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${alert.type}`;
+                alertDiv.innerHTML = `
+                    <div class="alert-message">${alert.message}</div>
+                    <div class="alert-time">${alert.time}</div>
+                `;
+                container.appendChild(alertDiv);
+            });
+        }
+
+        function refreshDashboard() {
+            loadDashboardData();
+        }
+
+        function showAutomationPanel() {
+            // Load unassigned orders
+            const unassignedOrders = allOrders.filter(o => !o.agentId || o.agentId === '');
+            const orderSelect = document.getElementById('orderSelect');
+            orderSelect.innerHTML = '<option value="">Select unassigned order...</option>';
+            
+            unassignedOrders.forEach(order => {
+                const option = document.createElement('option');
+                option.value = order.id;
+                option.textContent = `${order.id} - ${order.customerName} (${order.region})`;
+                orderSelect.appendChild(option);
+            });
+
+            document.getElementById('automationModal').style.display = 'block';
+        }
+
+        function closeAutomationModal() {
+            document.getElementById('automationModal').style.display = 'none';
+        }
+
+        function updateAvailableAgents() {
+            const region = document.getElementById('regionSelect').value;
+            const agentSelect = document.getElementById('agentSelectManual');
+            agentSelect.innerHTML = '<option value="">Select agent...</option>';
+
+            if (region) {
+                const availableAgents = allAgents.filter(a => 
+                    a.region === region && 
+                    a.status === 'active' && 
+                    a.currentLoad < a.maxCapacity
+                );
+
+                availableAgents.forEach(agent => {
+                    const option = document.createElement('option');
+                    option.value = agent.id;
+                    option.textContent = `${agent.name} (${agent.currentLoad}/${agent.maxCapacity})`;
+                    agentSelect.appendChild(option);
+                });
+            }
+        }
+
+        function autoAssignOrder() {
+            const orderId = document.getElementById('orderSelect').value;
+            const region = document.getElementById('regionSelect').value;
+
+            if (!orderId || !region) {
+                alert('Please select an order and region');
+                return;
+            }
+
+            fetch('/api/automation/assign-agent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ orderId, region })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert(`Order ${orderId} assigned to ${result.assignedAgent.name}`);
+                    closeAutomationModal();
+                    loadDashboardData();
+                } else {
+                    alert(result.error || 'Assignment failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Assignment failed');
+            });
+        }
+
+        function viewAgentDetails(agentId) {
+            const agent = allAgents.find(a => a.id === agentId);
+            if (!agent) return;
+
+            document.getElementById('agentDetailsTitle').textContent = `${agent.name} - Details`;
+            
+            const agentOrders = allOrders.filter(o => o.agentId === agentId);
+            
+            document.getElementById('agentDetailsContent').innerHTML = `
+                <div class="agent-profile">
+                    <h4>Profile Information</h4>
+                    <p><strong>Name:</strong> ${agent.name}</p>
+                    <p><strong>Email:</strong> ${agent.email}</p>
+                    <p><strong>Phone:</strong> ${agent.phone}</p>
+                    <p><strong>Region:</strong> ${agent.region}</p>
+                    <p><strong>Status:</strong> ${agent.status}</p>
+                </div>
+                <div class="agent-performance">
+                    <h4>Performance Metrics</h4>
+                    <p><strong>Rating:</strong> ${agent.performanceRating}/5.0</p>
+                    <p><strong>Total Deliveries:</strong> ${agent.totalDeliveries}</p>
+                    <p><strong>Current Load:</strong> ${agent.currentLoad}/${agent.maxCapacity}</p>
+                </div>
+                <div class="agent-orders">
+                    <h4>Current Orders (${agentOrders.length})</h4>
+                    ${agentOrders.map(order => `
+                        <div class="order-summary">
+                            <strong>${order.id}</strong> - ${order.customerName}<br>
+                            <small>Status: ${formatStatus(order.status)} | ${order.items.join(', ')}</small>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('agentDetailsModal').style.display = 'block';
+        }
+
+        function closeAgentDetailsModal() {
+            document.getElementById('agentDetailsModal').style.display = 'none';
+        }
+
+        function contactAgent(agentId) {
+            const agent = allAgents.find(a => a.id === agentId);
+            if (agent) {
+                alert(`Contacting ${agent.name} at ${agent.phone}`);
+            }
+        }
+
+        // Handle manual assignment form
+        document.getElementById('manualAssignForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const orderId = document.getElementById('orderSelect').value;
+            const agentId = document.getElementById('agentSelectManual').value;
+            
+            if (!orderId || !agentId) {
+                alert('Please select both order and agent');
+                return;
+            }
+
+            // Simulate manual assignment
+            alert(`Order ${orderId} manually assigned to agent ${agentId}`);
+            closeAutomationModal();
+            loadDashboardData();
+        });
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = ['automationModal', 'agentDetailsModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
